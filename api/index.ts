@@ -1,44 +1,55 @@
+import { Request, Response } from 'express';
 import app from '../src/app';
 import mongoose from 'mongoose';
-import env from '../src/config/environment';
-import logger from '../src/config/logger';
 
 // Cache database connection across serverless invocations
-let cachedConnection: typeof mongoose | null = null;
+let isConnecting = false;
 
 // Initialize database connection with caching
 const connectDatabase = async (): Promise<void> => {
-  if (cachedConnection && mongoose.connection.readyState === 1) {
-    logger.info('Using existing database connection');
+  // Check if already connected
+  if (mongoose.connection.readyState === 1) {
     return;
   }
 
+  // Check if connection is in progress
+  if (mongoose.connection.readyState === 2 || isConnecting) {
+    // Wait for connection to complete
+    return new Promise((resolve, reject) => {
+      mongoose.connection.once('connected', resolve);
+      mongoose.connection.once('error', reject);
+    });
+  }
+
   try {
-    if (!cachedConnection) {
-      cachedConnection = await mongoose.connect(env.MONGODB_URI);
-      logger.info(`✅ MongoDB Connected: ${cachedConnection.connection.host}`);
-    } else if (mongoose.connection.readyState === 0) {
-      // Reconnect if connection was lost
-      await mongoose.connect(env.MONGODB_URI);
-      logger.info('MongoDB reconnected');
+    const mongoUri = process.env.MONGODB_URI;
+    
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is not set. Please add it in Vercel project settings.');
     }
-  } catch (error) {
-    logger.error(`❌ MongoDB connection error: ${error}`);
-    cachedConnection = null;
+
+    isConnecting = true;
+    await mongoose.connect(mongoUri);
+    isConnecting = false;
+    console.log(`✅ MongoDB Connected: ${mongoose.connection.host}`);
+  } catch (error: any) {
+    isConnecting = false;
+    console.error(`❌ MongoDB connection error:`, error);
     throw error;
   }
 };
 
 // Vercel serverless function handler
-export default async function handler(req: any, res: any) {
+export default async function handler(req: Request, res: Response) {
   // Initialize database if not already connected
   try {
     await connectDatabase();
-  } catch (error) {
-    logger.error('Database connection failed:', error);
+  } catch (error: any) {
+    console.error('Database connection failed:', error);
     return res.status(500).json({
       success: false,
       message: 'Database connection failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs',
     });
   }
   
