@@ -53,17 +53,50 @@ const getApp = async () => {
   if (!appInstance) {
     try {
       // Dynamically import app to catch any initialization errors
-      // In production, use compiled dist folder; in development, use src
-      const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
-      const appPath = isProduction ? '../dist/app' : '../src/app';
-      const appModule = await import(appPath);
+      // Try multiple paths to handle different build scenarios
+      const possiblePaths = [
+        '../dist/app', // Production build
+        '../src/app', // Development or if src is available
+        './dist/app', // Alternative path
+      ];
+
+      let appModule;
+      let lastError: any = null;
+
+      for (const appPath of possiblePaths) {
+        try {
+          appModule = await import(appPath);
+          if (appModule && appModule.default) {
+            break;
+          }
+        } catch (err: any) {
+          lastError = err;
+          // Continue to next path
+          continue;
+        }
+      }
+
+      if (!appModule || !appModule.default) {
+        throw lastError || new Error('Failed to load app from any path');
+      }
+
       appInstance = appModule.default;
     } catch (error: any) {
       console.error('Error loading app:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+      });
       // Provide more helpful error message
       if (error.message && error.message.includes('environment variables')) {
         throw new Error(
           `Configuration error: ${error.message}. Please check Vercel environment variables.`
+        );
+      }
+      if (error.code === 'MODULE_NOT_FOUND') {
+        throw new Error(
+          `Module not found: ${error.message}. Make sure the project is built correctly.`
         );
       }
       throw error;

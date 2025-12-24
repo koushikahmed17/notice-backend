@@ -3,11 +3,12 @@ import path from 'path';
 import fs from 'fs';
 import env from './environment';
 
-const logDir = path.join(process.cwd(), 'logs');
-
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
+// Check if we're in a serverless environment (Vercel, AWS Lambda, etc.)
+const isServerless = !!(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.VERCEL_ENV
+);
 
 const logger = winston.createLogger({
   level: env.LOG_LEVEL,
@@ -18,18 +19,12 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   defaultMeta: { service: 'nebs-backend' },
-  transports: [
-    new winston.transports.File({
-      filename: path.join(logDir, 'error.log'),
-      level: 'error',
-    }),
-    new winston.transports.File({
-      filename: path.join(logDir, 'combined.log'),
-    }),
-  ],
+  transports: [],
 });
 
-if (env.NODE_ENV !== 'production') {
+// In serverless environments, only use console transport
+// File system is read-only in Vercel/Lambda
+if (isServerless) {
   logger.add(
     new winston.transports.Console({
       format: winston.format.combine(
@@ -43,6 +38,60 @@ if (env.NODE_ENV !== 'production') {
       ),
     })
   );
+} else {
+  // In non-serverless environments, use file transports
+  const logDir = path.join(process.cwd(), 'logs');
+  
+  try {
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    logger.add(
+      new winston.transports.File({
+        filename: path.join(logDir, 'error.log'),
+        level: 'error',
+      })
+    );
+    logger.add(
+      new winston.transports.File({
+        filename: path.join(logDir, 'combined.log'),
+      })
+    );
+    
+    // Also add console in development
+    if (env.NODE_ENV !== 'production') {
+      logger.add(
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.printf(
+              ({ timestamp, level, message, ...meta }) =>
+                `${timestamp} [${level}]: ${message} ${
+                  Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
+                }`
+            )
+          ),
+        })
+      );
+    }
+  } catch (error) {
+    // If file system operations fail, fall back to console only
+    console.warn('Failed to set up file logging, using console only:', error);
+    logger.add(
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.printf(
+            ({ timestamp, level, message, ...meta }) =>
+              `${timestamp} [${level}]: ${message} ${
+                Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
+              }`
+          )
+        ),
+      })
+    );
+  }
 }
 
 export default logger;
