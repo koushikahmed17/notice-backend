@@ -22,11 +22,7 @@ try {
     error.errors.forEach((err) => {
       console.error(`  ${err.path.join('.')}: ${err.message}`);
     });
-    // Don't exit in serverless environment - throw error instead
-    // This allows the handler to catch and return proper error response
-    if (process.env.VERCEL) {
-      throw new Error(`Missing required environment variables: ${error.errors.map(e => e.path.join('.')).join(', ')}`);
-    }
+    // Exit process if environment variables are invalid
     process.exit(1);
   }
   throw error;

@@ -3,11 +3,9 @@ import path from 'path';
 import fs from 'fs';
 import env from './environment';
 
-// Check if we're in a serverless environment (Vercel, AWS Lambda, etc.)
+// Check if we're in a serverless environment (AWS Lambda, etc.)
 const isServerless = !!(
-  process.env.VERCEL ||
-  process.env.AWS_LAMBDA_FUNCTION_NAME ||
-  process.env.VERCEL_ENV
+  process.env.AWS_LAMBDA_FUNCTION_NAME
 );
 
 const logger = winston.createLogger({
@@ -23,7 +21,7 @@ const logger = winston.createLogger({
 });
 
 // In serverless environments, only use console transport
-// File system is read-only in Vercel/Lambda
+// File system is read-only in serverless environments
 if (isServerless) {
   logger.add(
     new winston.transports.Console({

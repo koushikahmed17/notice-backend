@@ -194,7 +194,7 @@ const startServer = async (): Promise<void> => {
   }
 };
 
-// Only start server if not in serverless/vercel environment
+// Start server when this file is run directly
 if (require.main === module) {
   startServer();
 }
