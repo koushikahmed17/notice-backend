@@ -53,10 +53,19 @@ const getApp = async () => {
   if (!appInstance) {
     try {
       // Dynamically import app to catch any initialization errors
-      const appModule = await import('../src/app');
+      // In production, use compiled dist folder; in development, use src
+      const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+      const appPath = isProduction ? '../dist/app' : '../src/app';
+      const appModule = await import(appPath);
       appInstance = appModule.default;
     } catch (error: any) {
       console.error('Error loading app:', error);
+      // Provide more helpful error message
+      if (error.message && error.message.includes('environment variables')) {
+        throw new Error(
+          `Configuration error: ${error.message}. Please check Vercel environment variables.`
+        );
+      }
       throw error;
     }
   }
@@ -95,10 +104,22 @@ export default async function handler(req: any, res: any) {
     } catch (error: any) {
       console.error('Error loading app or handling request:', error);
       // If app fails to load, return error but don't crash
+      const errorMessage = error.message || 'Unknown error';
+      const isConfigError =
+        errorMessage.includes('environment variables') || errorMessage.includes('MONGODB_URI');
+
       return res.status(500).json({
         success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs',
+        message: isConfigError
+          ? 'Configuration error: Missing required environment variables. Please check Vercel project settings.'
+          : 'Internal server error',
+        error:
+          process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview'
+            ? errorMessage
+            : 'Please check server logs',
+        ...(isConfigError && {
+          hint: 'Make sure MONGODB_URI and other required environment variables are set in Vercel project settings.',
+        }),
         stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       });
     }
