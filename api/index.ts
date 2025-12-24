@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 
 // Cache database connection across serverless invocations
@@ -65,11 +64,13 @@ const getApp = async () => {
 };
 
 // Vercel serverless function handler
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: any, res: any) {
   try {
     // Handle health check without requiring database or app initialization
-    const url = req.url || req.path || '';
-    if (url === '/health' || url === '/api/health' || url.endsWith('/health')) {
+    const url = req.url || req.path || (req as any).originalUrl || '';
+    const path = url.split('?')[0]; // Remove query string
+
+    if (path === '/health' || path === '/api/health' || path.endsWith('/health')) {
       return res.status(200).json({
         success: true,
         message: 'Server is running',
@@ -78,25 +79,39 @@ export default async function handler(req: Request, res: Response) {
     }
 
     // For other routes, load app and connect to database
-    const app = await getApp();
-
-    // Try to connect database (non-blocking for routes that don't need it)
     try {
-      await connectDatabase();
-    } catch (error: any) {
-      console.error('Database connection failed (non-critical):', error.message);
-      // Continue - let individual routes handle DB requirements
-    }
+      const app = await getApp();
 
-    // Handle the request with Express app
-    return app(req, res);
+      // Try to connect database (non-blocking for routes that don't need it)
+      try {
+        await connectDatabase();
+      } catch (error: any) {
+        console.error('Database connection failed (non-critical):', error.message);
+        // Continue - let individual routes handle DB requirements
+      }
+
+      // Handle the request with Express app
+      return app(req, res);
+    } catch (error: any) {
+      console.error('Error loading app or handling request:', error);
+      // If app fails to load, return error but don't crash
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
+    }
   } catch (error: any) {
-    console.error('Error in handler:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-    });
+    console.error('Fatal error in handler:', error);
+    // Last resort error handler
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Please check server logs',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
+    }
   }
 }
