@@ -20,7 +20,7 @@ const connectDatabase = async (): Promise<void> => {
         clearTimeout(timeout);
         resolve();
       });
-      mongoose.connection.once('error', (err) => {
+      mongoose.connection.once('error', err => {
         clearTimeout(timeout);
         reject(err);
       });
@@ -29,9 +29,11 @@ const connectDatabase = async (): Promise<void> => {
 
   try {
     const mongoUri = process.env.MONGODB_URI;
-    
+
     if (!mongoUri) {
-      throw new Error('MONGODB_URI environment variable is not set. Please add it in Vercel project settings.');
+      throw new Error(
+        'MONGODB_URI environment variable is not set. Please add it in Vercel project settings.'
+      );
     }
 
     isConnecting = true;
@@ -77,7 +79,7 @@ export default async function handler(req: Request, res: Response) {
 
     // For other routes, load app and connect to database
     const app = await getApp();
-    
+
     // Try to connect database (non-blocking for routes that don't need it)
     try {
       await connectDatabase();
@@ -85,7 +87,7 @@ export default async function handler(req: Request, res: Response) {
       console.error('Database connection failed (non-critical):', error.message);
       // Continue - let individual routes handle DB requirements
     }
-    
+
     // Handle the request with Express app
     return app(req, res);
   } catch (error: any) {
@@ -98,4 +100,3 @@ export default async function handler(req: Request, res: Response) {
     });
   }
 }
-

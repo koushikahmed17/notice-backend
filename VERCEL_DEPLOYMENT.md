@@ -18,6 +18,7 @@ npm install -g vercel
 ```
 
 Or use npx without installing:
+
 ```bash
 npx vercel
 ```
@@ -25,6 +26,7 @@ npx vercel
 ### Step 2: Prepare Your Project
 
 The following files have been created for Vercel deployment:
+
 - `vercel.json` - Vercel configuration
 - `api/index.ts` - Serverless function handler
 
@@ -33,12 +35,14 @@ The following files have been created for Vercel deployment:
 You need to configure environment variables in Vercel:
 
 **Required Environment Variables:**
+
 - `MONGODB_URI` - Your MongoDB connection string
 - `NODE_ENV` - Set to `production` (already configured in vercel.json)
 - `PORT` - Optional (Vercel handles this automatically)
 - `LOG_LEVEL` - Optional (defaults to 'info')
 
 **Optional Environment Variables (if you use them):**
+
 - `JWT_SECRET` - If you use JWT authentication
 - Any other environment variables your app requires
 
@@ -76,16 +80,19 @@ You need to configure environment variables in Vercel:
 ### Step 5: Deploy via CLI (Alternative Method)
 
 1. **Login to Vercel**
+
    ```bash
    vercel login
    ```
 
 2. **Deploy to Production**
+
    ```bash
    vercel --prod
    ```
 
 3. **Set Environment Variables via CLI**
+
    ```bash
    vercel env add MONGODB_URI
    vercel env add NODE_ENV
@@ -114,7 +121,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'https://your-frontend-domain.vercel.app', // Add your frontend domain
-  'https://your-project-name.vercel.app',    // Add your backend domain if needed
+  'https://your-project-name.vercel.app', // Add your backend domain if needed
 ];
 ```
 
@@ -128,46 +135,55 @@ const allowedOrigins = [
 ## Important Notes
 
 ### Database Connection
+
 - The database connection is cached across serverless function invocations
 - Vercel serverless functions may have cold starts, so the first request might be slower
 - Make sure your MongoDB Atlas (or other MongoDB provider) allows connections from Vercel's IP ranges
 
 ### File Uploads
+
 - If you're using file uploads, consider using Vercel Blob Storage or external storage (AWS S3, Cloudinary, etc.)
 - The `uploads/` folder won't persist on Vercel's serverless functions
 
 ### Environment Variables
+
 - Never commit `.env` files to Git
 - Always add environment variables through Vercel dashboard or CLI
 - Different environments (Production, Preview, Development) can have different values
 
 ### Build Process
+
 - Vercel automatically runs `npm install` and `npm run build`
 - Make sure your `build` script in `package.json` compiles TypeScript correctly
 - The compiled output in `dist/` is used by the serverless function
 
 ### Logs
+
 - View logs in Vercel Dashboard → Your Project → Deployments → Click on a deployment → "Functions" tab
 - Or use: `vercel logs`
 
 ## Troubleshooting
 
 ### Build Fails
+
 - Check build logs in Vercel dashboard
 - Ensure all dependencies are in `dependencies` (not just `devDependencies`)
 - Verify TypeScript compilation works locally: `npm run build`
 
 ### Database Connection Issues
+
 - Verify `MONGODB_URI` is set correctly in Vercel environment variables
 - Check MongoDB Atlas network access allows all IPs (0.0.0.0/0) or Vercel's IPs
 - Check MongoDB connection string format
 
 ### 500 Errors
+
 - Check function logs in Vercel dashboard
 - Verify all environment variables are set
 - Check database connection status
 
 ### CORS Errors
+
 - Update `allowedOrigins` in `src/app.ts` with your frontend domain
 - Ensure CORS middleware is properly configured
 
@@ -203,4 +219,3 @@ vercel rm <deployment-url>
 - Vercel Documentation: https://vercel.com/docs
 - Vercel Discord: https://vercel.com/discord
 - Check your project logs in Vercel dashboard for specific errors
-

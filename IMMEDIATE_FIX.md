@@ -1,6 +1,7 @@
 # Immediate Fix for Vercel Warning
 
 ## The Problem
+
 The warning "Due to 'builds' existing in your configuration file" is still showing even though we removed it from `vercel.json`. This is because:
 
 1. **The changes haven't been deployed yet** - You need to commit and push, OR
@@ -53,6 +54,7 @@ This will trigger a new deployment automatically.
 ## Why This Happens
 
 Vercel checks BOTH:
+
 - Your `vercel.json` file (which we fixed ✅)
 - Your Project Settings in the dashboard (which might still have build config)
 
@@ -75,7 +77,7 @@ Both need to be cleared for the warning to disappear.
 The warning should disappear on the next deployment. Your API will still work the same way, just without the warning.
 
 Test your health endpoint:
+
 ```
 https://notice-backend-75ro3ehc5-koushiks-projects-5b0d61d3.vercel.app/health
 ```
-
