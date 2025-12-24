@@ -1,150 +1,99 @@
 # Nebs Backend
 
-A robust Express.js backend application built with TypeScript, Mongoose, and Zod for validation.
+## Project Overview
 
-## Features
+Nebs Backend is a robust Express.js backend application built with TypeScript for a Clinic Management System. It provides a RESTful API with comprehensive features including authentication, data validation, error handling, and logging. The application follows a clean, structured architecture with separation of concerns for maintainability and scalability.
 
-- ✅ TypeScript for type safety
-- ✅ Express.js for RESTful API
-- ✅ Mongoose for MongoDB ODM
-- ✅ Zod for schema validation
-- ✅ JWT authentication
-- ✅ Winston for logging
-- ✅ Rate limiting
-- ✅ Error handling middleware
-- ✅ ESLint & Prettier for code quality
-- ✅ Structured project architecture
+## Tech Stack
 
-## Project Structure
+- **Express.js** - Web framework for building RESTful APIs
+- **TypeScript** - Type-safe JavaScript for better code quality
+- **Mongoose** - MongoDB ODM (Object Data Modeling)
+- **Zod** - Schema validation library
+- **JWT (jsonwebtoken)** - Authentication and authorization
+- **Winston** - Logging library
+- **Helmet** - Security middleware
+- **CORS** - Cross-origin resource sharing
+- **Bcryptjs** - Password hashing
+- **Express Rate Limit** - Rate limiting middleware
+- **Multer** - File upload handling
+- **Dotenv** - Environment variable management
 
-```
-Nebs-backend/
-├── src/
-│   ├── config/          # Configuration files
-│   ├── models/          # Mongoose models
-│   ├── schemas/         # Zod validation schemas
-│   ├── controllers/     # Route handlers
-│   ├── services/        # Business logic
-│   ├── routes/          # Route definitions
-│   ├── middlewares/     # Express middlewares
-│   ├── utils/           # Utility functions
-│   ├── types/           # TypeScript types
-│   ├── constants/       # Constants
-│   ├── interfaces/      # Interface definitions
-│   ├── app.ts           # Express app setup
-│   └── server.ts        # Server entry point
-├── tests/               # Test files
-├── scripts/             # Utility scripts
-└── logs/                # Log files
-```
+## Installation Steps
 
-## Quick Start
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd nebs-backend
+   ```
 
-### 1. Install Dependencies
-```bash
-npm install
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### 2. Set Up Environment Variables
-Create a `.env` file in the root directory (copy from `.env.example`):
+3. **Set up environment variables**
+   - Create a `.env` file in the root directory
+   - Add the required environment variables (see ENV Variable Instructions below)
 
-**Windows:**
-```bash
-copy .env.example .env
-```
+4. **Start MongoDB**
+   - Ensure MongoDB is running locally, or
+   - Use MongoDB Atlas (cloud) and update the `MONGODB_URI` in your `.env` file
 
-**Mac/Linux:**
-```bash
-cp .env.example .env
-```
+5. **Run the application**
+   ```bash
+   # Development mode
+   npm run dev
 
-Edit `.env` with your configuration:
+   # Production mode (after building)
+   npm run build
+   npm start
+   ```
+
+6. **Verify the installation**
+   - The server should start on the configured port (default: 3000)
+   - Visit `http://localhost:3000/api/health` to check if the API is running
+
+## ENV Variable Instructions
+
+Create a `.env` file in the root directory with the following variables:
+
+### Required Variables
+
 ```env
+# Application Environment
 NODE_ENV=development
+
+# Server Configuration
 PORT=3000
+
+# Database Configuration
 MONGODB_URI=mongodb://localhost:27017/nebs-backend
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=7d
-BCRYPT_ROUNDS=10
+
+# Logging Configuration
 LOG_LEVEL=info
 ```
 
-### 3. Start MongoDB
-- **Local:** Start MongoDB service on your machine
-- **Cloud:** Use MongoDB Atlas and update `MONGODB_URI` in `.env`
+### Optional Variables
 
-### 4. Seed Database (Optional)
-```bash
-npm run seed
-```
-Creates sample notices for testing
-
-### 5. Run the Project
-```bash
-npm run dev
+```env
+# Frontend URL (for CORS configuration)
+FRONTEND_URL=http://localhost:3001
 ```
 
-Server will start at `http://localhost:3000`
+### Variable Descriptions
 
-**For detailed setup instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+- **NODE_ENV**: Application environment (`development`, `production`, or `test`)
+- **PORT**: Port number on which the server will run (default: `3000`)
+- **MONGODB_URI**: MongoDB connection string (required)
+  - Local: `mongodb://localhost:27017/nebs-backend`
+  - Atlas: `mongodb+srv://username:password@cluster.mongodb.net/database-name`
+- **LOG_LEVEL**: Logging level (`error`, `warn`, `info`, or `debug`)
+- **FRONTEND_URL**: Frontend application URL for CORS configuration (optional, defaults to `*`)
 
-## Usage
+### Notes
 
-### Development
-```bash
-npm run dev
-```
-
-### Build
-```bash
-npm run build
-```
-
-### Production
-```bash
-npm start
-```
-
-### Seed Database
-```bash
-npm run seed
-```
-
-### Linting
-```bash
-npm run lint
-npm run lint:fix
-```
-
-### Formatting
-```bash
-npm run format
-```
-
-## API Endpoints
-
-### Notices
-- `GET /api/notices` - Get all notices (with filtering: status, noticeType, targetType)
-- `GET /api/notices/:id` - Get notice by ID
-- `POST /api/notices` - Create notice
-- `PUT /api/notices/:id` - Update notice
-- `PATCH /api/notices/:id/status` - Update notice status (draft/published/unpublished)
-- `DELETE /api/notices/:id` - Delete notice
-
-## Technologies
-
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **Mongoose** - MongoDB ODM
-- **Zod** - Schema validation
-- **JWT** - Authentication
-- **Winston** - Logging
-- **Bcrypt** - Password hashing
-- **Helmet** - Security
-- **CORS** - Cross-origin resource sharing
-
-## License
-
-ISC
-
-
+- All environment variables are validated on application startup using Zod
+- Invalid or missing required variables will cause the application to exit with an error
+- Never commit the `.env` file to version control
+- Use different `.env` files for different environments (development, staging, production)
